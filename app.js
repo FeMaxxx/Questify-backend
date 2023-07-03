@@ -2,7 +2,7 @@ import express from "express";
 import logger from "morgan";
 import cors from "cors";
 import dotenv from "dotenv";
-import { authRouter, wordsRouter } from "./routes/index.js";
+import { authRouter, usersRouter, wordsRouter } from "./routes/index.js";
 import { authenticate } from "./middlewares/index.js";
 
 dotenv.config();
@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/users", authenticate, usersRouter);
 app.use("/api/v1/words", authenticate, wordsRouter);
 
 app.use((req, res) => {

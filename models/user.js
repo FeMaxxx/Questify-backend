@@ -18,6 +18,34 @@ const userSchema = new Schema(
       require: true,
       minLength: 6,
     },
+    wordsInDictionary: {
+      type: Number,
+      default: 0,
+    },
+    wordsInLearningProcess: {
+      type: Number,
+      default: 0,
+    },
+    totalWordCount: {
+      type: Number,
+      default: 0,
+    },
+    successfulWordConfirmation: {
+      type: Number,
+      default: 0,
+    },
+    failedWordConfirmation: {
+      type: Number,
+      default: 0,
+    },
+    successfulRandomWordConfirmation: {
+      type: Number,
+      default: 0,
+    },
+    failedRandomWordConfirmation: {
+      type: Number,
+      default: 0,
+    },
     token: {
       type: String,
       default: "",
@@ -33,8 +61,13 @@ const authSchema = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
+const updateStats = Joi.object({
+  successes: Joi.boolean().required(),
+});
+
 export const User = model("user", userSchema);
 
 export const schemas = {
   authSchema,
+  updateStats,
 };

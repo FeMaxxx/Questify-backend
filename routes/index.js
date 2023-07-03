@@ -1,4 +1,5 @@
 import { authRouter } from "./auth.js";
+import { usersRouter } from "./users.js";
 import { wordsRouter } from "./words.js";
 
-export { authRouter, wordsRouter };
+export { authRouter, usersRouter, wordsRouter };
