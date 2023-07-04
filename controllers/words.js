@@ -10,20 +10,20 @@ const getAll = async (req, res) => {
   res.json(result);
 };
 
-const getRandomVordFromDictionary = async (req, res) => {
+const getRandomVordFromVocabulary = async (req, res) => {
   const { _id } = req.user;
   const words = await Word.find({ _id });
-  const dictionary = [...words[0].dictionary];
-  const randomNumber = Math.floor(Math.random() * dictionary.length);
+  const vocabulary = [...words[0].vocabulary];
+  const randomNumber = Math.floor(Math.random() * vocabulary.length);
 
-  res.json(dictionary[randomNumber]);
+  res.json(vocabulary[randomNumber]);
 };
 
 const add = async (req, res) => {
   const { _id } = req.user;
   const words = await Word.find({ _id });
   const allWords = [
-    ...words[0].dictionary,
+    ...words[0].vocabulary,
     ...words[0].firstLvl,
     ...words[0].secondLvl,
     ...words[0].thirdLvl,
@@ -44,7 +44,7 @@ const moveWord = async (req, res) => {
   const { _id } = req.user;
   const { id, moveFrom, moveTo } = req.body;
   const specification = {
-    dictionary: 4,
+    vocabulary: 4,
     firstLvl: 1,
     secondLvl: 2,
     thirdLvl: 3,
@@ -61,15 +61,15 @@ const moveWord = async (req, res) => {
   if (specification[moveFrom] > specification[moveTo]) {
     statsRequest.failedWordConfirmation = 1;
 
-    if (moveFrom === "dictionary") {
-      statsRequest.wordsInDictionary = -1;
+    if (moveFrom === "vocabulary") {
+      statsRequest.wordsInVocabulary = -1;
       statsRequest.wordsInLearningProcess = 1;
     }
   }
 
-  if (specification[moveFrom] < specification[moveTo] && moveTo === "dictionary") {
+  if (specification[moveFrom] < specification[moveTo] && moveTo === "vocabulary") {
     statsRequest.successfulWordConfirmation = 1;
-    statsRequest.wordsInDictionary = 1;
+    statsRequest.wordsInVocabulary = 1;
     statsRequest.wordsInLearningProcess = -1;
   }
 
@@ -96,8 +96,8 @@ const deleteWord = async (req, res) => {
 
   let statsRequest = { totalWordCount: -1 };
 
-  if (deleteFrom === "dictionary") {
-    statsRequest.wordsInDictionary = -1;
+  if (deleteFrom === "vocabulary") {
+    statsRequest.wordsInVocabulary = -1;
   } else {
     statsRequest.wordsInLearningProcess = -1;
   }
@@ -109,7 +109,7 @@ const deleteWord = async (req, res) => {
 
 export const ctrl = {
   getAll: ctrlWrapper(getAll),
-  getRandomVordFromDictionary: ctrlWrapper(getRandomVordFromDictionary),
+  getRandomVordFromVocabulary: ctrlWrapper(getRandomVordFromVocabulary),
   add: ctrlWrapper(add),
   moveWord: ctrlWrapper(moveWord),
   deleteWord: ctrlWrapper(deleteWord),

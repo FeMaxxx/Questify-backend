@@ -7,7 +7,7 @@ export const wordsRouter = express.Router();
 
 wordsRouter.get("/", ctrl.getAll);
 
-wordsRouter.get("/random", ctrl.getRandomVordFromDictionary);
+wordsRouter.get("/random", ctrl.getRandomVordFromVocabulary);
 
 wordsRouter.post("/", validateBody(schemas.addSchema), ctrl.add);
 

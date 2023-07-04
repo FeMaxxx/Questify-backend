@@ -23,7 +23,7 @@ const wordsSchem = {
 
 const wordSchema = new Schema(
   {
-    dictionary: [
+    vocabulary: [
       {
         word: {
           type: String,
@@ -48,7 +48,7 @@ const wordSchema = new Schema(
 
 wordSchema.post("save", handleMongooseError);
 
-const wordsContainers = ["dictionary", "firstLvl", "secondLvl", "thirdLvl"];
+const wordsContainers = ["vocabulary", "firstLvl", "secondLvl", "thirdLvl"];
 
 const addSchema = Joi.object({
   word: Joi.string().required(),

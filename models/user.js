@@ -18,7 +18,7 @@ const userSchema = new Schema(
       require: true,
       minLength: 6,
     },
-    wordsInDictionary: {
+    wordsInVocabulary: {
       type: Number,
       default: 0,
     },
