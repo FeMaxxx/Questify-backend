@@ -7,6 +7,9 @@
     "start": "cross-env NODE_ENV=production node ./server.js",
     "dev": "cross-env NODE_ENV=development nodemon ./server.js"
   },
+  "engines": {
+    "node": ">=14.20.1"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "2.8.5",

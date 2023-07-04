@@ -10,6 +10,15 @@ const getAll = async (req, res) => {
   res.json(result);
 };
 
+const getRandomVordFromDictionary = async (req, res) => {
+  const { _id } = req.user;
+  const words = await Word.find({ _id });
+  const dictionary = [...words[0].dictionary];
+  const randomNumber = Math.floor(Math.random() * dictionary.length);
+
+  res.json(dictionary[randomNumber]);
+};
+
 const add = async (req, res) => {
   const { _id } = req.user;
   const words = await Word.find({ _id });
@@ -100,6 +109,7 @@ const deleteWord = async (req, res) => {
 
 export const ctrl = {
   getAll: ctrlWrapper(getAll),
+  getRandomVordFromDictionary: ctrlWrapper(getRandomVordFromDictionary),
   add: ctrlWrapper(add),
   moveWord: ctrlWrapper(moveWord),
   deleteWord: ctrlWrapper(deleteWord),
