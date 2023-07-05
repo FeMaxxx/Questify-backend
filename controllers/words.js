@@ -42,7 +42,7 @@ const add = async (req, res) => {
 
 const moveWord = async (req, res) => {
   const { _id } = req.user;
-  const { id, moveFrom, moveTo } = req.body;
+  const { id, moveFrom, moveTo, canByConfirmed } = req.body;
   const specification = {
     vocabulary: 4,
     firstLvl: 1,
@@ -55,6 +55,16 @@ const moveWord = async (req, res) => {
   if (!foundWord) {
     throw HttpError(404, "Word not found");
   }
+
+  const word = JSON.parse(JSON.stringify(foundWord));
+
+  await Word.updateOne(
+    { _id },
+    {
+      $pull: { [moveFrom]: foundWord },
+      $push: { [moveTo]: { ...word, canByConfirmed } },
+    }
+  );
 
   let statsRequest = { successfulWordConfirmation: 1 };
 
@@ -74,13 +84,6 @@ const moveWord = async (req, res) => {
   }
 
   await User.findByIdAndUpdate(_id, { $inc: statsRequest });
-  await Word.updateOne(
-    { _id },
-    {
-      $pull: { [moveFrom]: foundWord },
-      $push: { [moveTo]: foundWord },
-    }
-  );
 
   res.status(200).json("Word moved");
 };

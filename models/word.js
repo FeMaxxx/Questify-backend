@@ -61,6 +61,7 @@ const moveSchema = Joi.object({
   id: Joi.string().required(),
   moveFrom: Joi.valid(...wordsContainers).required(),
   moveTo: Joi.valid(...wordsContainers).required(),
+  canByConfirmed: Joi.string().required(),
 });
 
 const deleteSchema = Joi.object({
