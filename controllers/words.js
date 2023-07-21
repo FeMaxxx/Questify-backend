@@ -1,6 +1,6 @@
 import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { Word } from "../models/word.js";
-import { User } from "../models/user.js";
+import { Stat } from "../models/stat.js";
 import { ObjectId } from "mongodb";
 
 const getAll = async (req, res) => {
@@ -35,7 +35,7 @@ const add = async (req, res) => {
   }
 
   await Word.updateOne({ _id }, { $push: { firstLvl: req.body } });
-  await User.findByIdAndUpdate(_id, { $inc: { totalWordCount: 1, wordsInLearningProcess: 1 } });
+  await Stat.findByIdAndUpdate(_id, { $inc: { totalWordCount: 1, wordsInLearningProcess: 1 } });
 
   res.status(201).json("Word Added");
 };
@@ -83,7 +83,7 @@ const moveWord = async (req, res) => {
     statsRequest.wordsInLearningProcess = -1;
   }
 
-  await User.findByIdAndUpdate(_id, { $inc: statsRequest });
+  await Stat.findByIdAndUpdate(_id, { $inc: statsRequest });
 
   res.status(200).json("Word moved");
 };
@@ -105,7 +105,7 @@ const deleteWord = async (req, res) => {
     statsRequest.wordsInLearningProcess = -1;
   }
 
-  await User.findByIdAndUpdate(_id, { $inc: statsRequest });
+  await Stat.findByIdAndUpdate(_id, { $inc: statsRequest });
 
   res.status(200).json("Word deleted");
 };

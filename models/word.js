@@ -23,6 +23,7 @@ const wordsSchem = {
 
 const wordSchema = new Schema(
   {
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     vocabulary: [
       {
         word: {

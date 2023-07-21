@@ -1,7 +1,7 @@
 import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { User } from "../models/user.js";
 
-const updateStats = async (req, res) => {
+const updateRandomWordStats = async (req, res) => {
   const { id } = req.user;
   let request = { successfulRandomWordConfirmation: 1 };
 
@@ -15,5 +15,5 @@ const updateStats = async (req, res) => {
 };
 
 export const ctrl = {
-  updateStats: ctrlWrapper(updateStats),
+  updateRandomWordStats: ctrlWrapper(updateRandomWordStats),
 };

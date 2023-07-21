@@ -8,9 +8,9 @@ mongoose
   .then(() => {
     console.log("Database connection successful");
 
-    app.listen(3000);
+    app.listen(5555);
   })
-  .catch((error) => {
+  .catch(error => {
     console.log(error.message);
     process.exit(1);
   });
