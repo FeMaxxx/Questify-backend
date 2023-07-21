@@ -1,10 +1,6 @@
 import { HttpError } from "../helpers/index.js";
-import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
-import dotenv from "dotenv";
-dotenv.config();
-
-const { SECRET_KEY } = process.env;
+import tokenService from "../services/tokens.js";
 
 export const authenticate = async (req, res, next) => {
   const { authorization = "" } = req.headers;
@@ -12,9 +8,10 @@ export const authenticate = async (req, res, next) => {
   if (bearer !== "Bearer" || token === "") next(HttpError(401));
 
   try {
-    const { id } = jwt.verify(token, SECRET_KEY);
+    const { id } = tokenService.validateAccessToken(token);
     const user = await User.findById(id);
-    if (!user || !user.token || user.token !== token) next(HttpError(401));
+    if (!user) next(HttpError(401));
+
     req.user = user;
     next();
   } catch {

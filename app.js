@@ -2,9 +2,9 @@ import express from "express";
 import logger from "morgan";
 import cors from "cors";
 import dotenv from "dotenv";
-import { authRouter, usersRouter, wordsRouter } from "./routes/index.js";
+import cookieParser from "cookie-parser";
+import { authRouter, statsRouter, wordsRouter } from "./routes/index.js";
 import { authenticate } from "./middlewares/index.js";
-
 dotenv.config();
 
 export const app = express();
@@ -14,9 +14,10 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/users", authenticate, usersRouter);
+app.use("/api/v1/stats", authenticate, statsRouter);
 app.use("/api/v1/words", authenticate, wordsRouter);
 
 app.use((req, res) => {
