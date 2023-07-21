@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { User } from "../models/user.js";
 import { Word } from "../models/word.js";
+import { Stat } from "../models/stat.js";
 import { sendEmail } from "../services/sendEmail.js";
 import { nanoid } from "nanoid";
 import tokenSetvice from "../services/tokens.js";
@@ -21,11 +22,10 @@ const register = async (req, res) => {
     subject: "Verify email",
     html: `<a target="_blank" href="https://tsylepa.github.io/Yummy/verification/${verificationCode}" >Click verify email</a>`,
   };
-
-  await sendEmail(varifyEmail);
   const newUser = await User.create({ ...req.body, password: hashPassword, verificationCode });
   const { _id } = newUser;
 
+  await sendEmail(varifyEmail);
   await Word.create({
     user: _id,
     vocabulary: [],
@@ -33,6 +33,7 @@ const register = async (req, res) => {
     secondLvl: [],
     thirdLvl: [],
   });
+  await Stat.create({ user: _id });
 
   res.status(201).json("Verify your email to complete the registration");
 };
