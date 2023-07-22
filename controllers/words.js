@@ -5,14 +5,14 @@ import { ObjectId } from "mongodb";
 
 const getAll = async (req, res) => {
   const { _id } = req.user;
-  const result = await Word.find({ _id });
+  const result = await Word.find({ user: _id });
 
   res.json(result);
 };
 
 const getRandomVordFromVocabulary = async (req, res) => {
   const { _id } = req.user;
-  const words = await Word.find({ _id });
+  const words = await Word.find({ user: _id });
   const vocabulary = [...words[0].vocabulary];
   const randomNumber = Math.floor(Math.random() * vocabulary.length);
 
@@ -21,7 +21,7 @@ const getRandomVordFromVocabulary = async (req, res) => {
 
 const add = async (req, res) => {
   const { _id } = req.user;
-  const words = await Word.find({ _id });
+  const words = await Word.find({ user: _id });
   const allWords = [
     ...words[0].vocabulary,
     ...words[0].firstLvl,
@@ -34,8 +34,8 @@ const add = async (req, res) => {
     throw HttpError(409, "Word already exists");
   }
 
-  await Word.updateOne({ _id }, { $push: { firstLvl: req.body } });
-  await Stat.findByIdAndUpdate(_id, { $inc: { totalWordCount: 1, wordsInLearningProcess: 1 } });
+  await Word.updateOne({ user: _id }, { $push: { firstLvl: req.body } });
+  await Stat.updateOne({ user: _id }, { $inc: { totalWordCount: 1, wordsInLearningProcess: 1 } });
 
   res.status(201).json("Word Added");
 };
@@ -49,7 +49,7 @@ const moveWord = async (req, res) => {
     secondLvl: 2,
     thirdLvl: 3,
   };
-  const words = await Word.find({ _id });
+  const words = await Word.find({ user: _id });
   const foundWord = words[0][moveFrom].find(item => new ObjectId(id).equals(item._id));
 
   if (!foundWord) {
@@ -59,7 +59,7 @@ const moveWord = async (req, res) => {
   const word = JSON.parse(JSON.stringify(foundWord));
 
   await Word.updateOne(
-    { _id },
+    { user: _id },
     {
       $pull: { [moveFrom]: foundWord },
       $push: { [moveTo]: { ...word, canByConfirmed } },
@@ -70,6 +70,7 @@ const moveWord = async (req, res) => {
 
   if (specification[moveFrom] > specification[moveTo]) {
     statsRequest.failedWordConfirmation = 1;
+    statsRequest.successfulWordConfirmation = 0;
 
     if (moveFrom === "vocabulary") {
       statsRequest.wordsInVocabulary = -1;
@@ -78,12 +79,11 @@ const moveWord = async (req, res) => {
   }
 
   if (specification[moveFrom] < specification[moveTo] && moveTo === "vocabulary") {
-    statsRequest.successfulWordConfirmation = 1;
     statsRequest.wordsInVocabulary = 1;
     statsRequest.wordsInLearningProcess = -1;
   }
 
-  await Stat.findByIdAndUpdate(_id, { $inc: statsRequest });
+  await Stat.updateOne({ user: _id }, { $inc: statsRequest });
 
   res.status(200).json("Word moved");
 };
@@ -91,7 +91,7 @@ const moveWord = async (req, res) => {
 const deleteWord = async (req, res) => {
   const { _id } = req.user;
   const { id, deleteFrom } = req.body;
-  const result = await Word.updateOne({ _id }, { $pull: { [deleteFrom]: { _id: id } } });
+  const result = await Word.updateOne({ user: _id }, { $pull: { [deleteFrom]: { _id: id } } });
 
   if (result.modifiedCount === 0) {
     throw HttpError(404, "Word not found");
@@ -105,7 +105,7 @@ const deleteWord = async (req, res) => {
     statsRequest.wordsInLearningProcess = -1;
   }
 
-  await Stat.findByIdAndUpdate(_id, { $inc: statsRequest });
+  await Stat.updateOne({ user: _id }, { $inc: statsRequest });
 
   res.status(200).json("Word deleted");
 };

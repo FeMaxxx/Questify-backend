@@ -5,7 +5,7 @@ import { Word } from "../models/word.js";
 import { Stat } from "../models/stat.js";
 import { sendEmail } from "../services/sendEmail.js";
 import { nanoid } from "nanoid";
-import tokenSetvice from "../services/tokens.js";
+import tokenService from "../services/tokens.js";
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -17,15 +17,15 @@ const register = async (req, res) => {
 
   const hashPassword = await bcrypt.hash(password, 10);
   const verificationCode = nanoid();
-  const varifyEmail = {
-    to: email,
-    subject: "Verify email",
-    html: `<a target="_blank" href="https://tsylepa.github.io/Yummy/verification/${verificationCode}" >Click verify email</a>`,
-  };
+  // const varifyEmail = {
+  //   to: email,
+  //   subject: "Verify email",
+  //   html: `<a target="_blank" href="https://tsylepa.github.io/Yummy/verification/${verificationCode}" >Click verify email</a>`,
+  // };
   const newUser = await User.create({ ...req.body, password: hashPassword, verificationCode });
   const { _id } = newUser;
 
-  await sendEmail(varifyEmail);
+  // await sendEmail(varifyEmail);'
   await Word.create({
     user: _id,
     vocabulary: [],
@@ -35,7 +35,7 @@ const register = async (req, res) => {
   });
   await Stat.create({ user: _id });
 
-  res.status(201).json("Verify your email to complete the registration");
+  res.status(201).json({ message: "Verify your email to complete the registration" });
 };
 
 const login = async (req, res) => {
@@ -44,14 +44,16 @@ const login = async (req, res) => {
   if (!user) {
     throw HttpError(401, "Email or password invalid");
   }
-
   const passwordCompare = await bcrypt.compare(password, user.password);
   if (!passwordCompare) {
     throw HttpError(401, "Email or password invalid");
   }
+  // if (user.verifiedEmail) {
+  //   throw HttpError(401, "Email is not verified");
+  // }
 
-  const tokens = tokenSetvice.generateTokens({ id: _id, email: user.email });
-  await tokenSetvice.saveToken(_id, tokens.refreshToken);
+  const tokens = tokenService.generateTokens({ id: user._id, email: user.email });
+  await tokenService.saveToken(user._id, tokens.refreshToken);
 
   res.cookie("refreshToken", tokens.refreshToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -68,18 +70,18 @@ const login = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
   const { verificationCode } = req.params;
-  const findUser = await User.findOne({ verificationCode });
-  if (!findUser) {
+  const user = await User.findOne({ verificationCode });
+  if (!user) {
     throw HttpError(401, "User not found");
   }
-  if (findUser.verifiedEmail) {
+  if (user.verifiedEmail) {
     throw HttpError(401, "Email has already been verified");
   }
 
-  const tokens = tokenSetvice.generateTokens({ id: _id, email: findUser.email });
+  const tokens = tokenService.generateTokens({ id: user._id, email: user.email });
 
-  await tokenSetvice.saveToken(_id, tokens.refreshToken);
-  await User.findByIdAndUpdate(findUser._id, {
+  await tokenService.saveToken(user._id, tokens.refreshToken);
+  await User.findByIdAndUpdate(user._id, {
     verifiedEmail: true,
     verificationCode: "",
   });
@@ -92,7 +94,7 @@ const verifyEmail = async (req, res) => {
   res.status(200).json({
     ...tokens,
     user: {
-      email: findUser.email,
+      email: user.email,
     },
   });
 };
@@ -103,14 +105,14 @@ const refreshToken = async (req, res) => {
     throw HttpError(403, "Token invalid");
   }
 
-  const userData = tokenService.validateRefreshToken(refreshToken);
+  const { id, email } = tokenService.validateRefreshToken(refreshToken);
   const tokenFromDb = await tokenService.findToken(refreshToken);
-  if (!userData || !tokenFromDb) {
+  if (!id || !email || !tokenFromDb) {
     throw HttpError(403, "Token invalid");
   }
 
-  const tokens = tokenSetvice.generateTokens({ id: _id });
-  await tokenSetvice.saveToken(_id, tokens.refreshToken);
+  const tokens = tokenService.generateTokens({ id, email });
+  await tokenService.saveToken(id, tokens.refreshToken);
 
   res.cookie("refreshToken", tokens.refreshToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -120,14 +122,14 @@ const refreshToken = async (req, res) => {
   res.status(200).json({
     ...tokens,
     user: {
-      email: userData.email,
+      email,
     },
   });
 };
 
 const getCurrent = async (req, res) => {
   const { email } = req.user;
-  res.json({
+  res.status(200).json({
     user: {
       email,
     },

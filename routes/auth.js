@@ -10,6 +10,8 @@ authRouter.post("/register", validateBody(schemas.authSchema), ctrl.register);
 
 authRouter.post("/login", validateBody(schemas.authSchema), ctrl.login);
 
+authRouter.post("/refresh", ctrl.refreshToken);
+
 authRouter.get("/current", authenticate, ctrl.getCurrent);
 
 authRouter.post("/logout", authenticate, ctrl.logout);

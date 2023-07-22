@@ -8,7 +8,7 @@ const emailRegexp =
 const userSchema = new Schema(
   {
     email: { type: String, require: true, match: emailRegexp, unique: true },
-    password: { type: String, require: true, minLength: 8, maxLength: 40 },
+    password: { type: String, require: true },
     verificationCode: { type: String, default: "" },
     verifiedEmail: { type: Boolean, default: false },
   },
