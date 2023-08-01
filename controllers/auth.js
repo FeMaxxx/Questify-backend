@@ -3,7 +3,7 @@ import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { User } from "../models/user.js";
 import { Word } from "../models/word.js";
 import { Stat } from "../models/stat.js";
-import { sendEmail } from "../services/sendEmail.js";
+import { sendActivationMail } from "../services/sendEmail.js";
 import { nanoid } from "nanoid";
 import tokenService from "../services/tokens.js";
 
@@ -11,29 +11,22 @@ const register = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
 
-  if (user) {
-    throw HttpError(409, "Email already in use");
-  }
+  if (user) throw HttpError(409, "Email already in use");
 
   const hashPassword = await bcrypt.hash(password, 10);
-  const verificationCode = nanoid();
-  // const varifyEmail = {
-  //   to: email,
-  //   subject: "Verify email",
-  //   html: `<a target="_blank" href="https://tsylepa.github.io/Yummy/verification/${verificationCode}" >Click verify email</a>`,
-  // };
+  const verificationCode = nanoid().slice(0, 6);
   const newUser = await User.create({ ...req.body, password: hashPassword, verificationCode });
-  const { _id } = newUser;
+  // const { _id } = newUser;
 
-  // await sendEmail(varifyEmail);'
-  await Word.create({
-    user: _id,
-    vocabulary: [],
-    firstLvl: [],
-    secondLvl: [],
-    thirdLvl: [],
-  });
-  await Stat.create({ user: _id });
+  // await Word.create({
+  //   user: _id,
+  //   vocabulary: [],
+  //   firstLvl: [],
+  //   secondLvl: [],
+  //   thirdLvl: [],
+  // });
+  // await Stat.create({ user: _id });
+  await sendActivationMail(email, verificationCode);
 
   res.status(201).json({ message: "Verify your email to complete the registration" });
 };
@@ -48,9 +41,10 @@ const login = async (req, res) => {
   if (!passwordCompare) {
     throw HttpError(401, "Email or password invalid");
   }
-  // if (user.verifiedEmail) {
-  //   throw HttpError(401, "Email is not verified");
-  // }
+  if (!user.verifiedEmail) {
+    await sendActivationMail(email, user.verificationCode);
+    throw HttpError(409, "Email is not verified");
+  }
 
   const tokens = tokenService.generateTokens({ id: user._id, email: user.email });
   await tokenService.saveToken(user._id, tokens.refreshToken);
@@ -59,9 +53,12 @@ const login = async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
   });
+  res.cookie("accessToken", tokens.accessToken, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
 
   res.json({
-    ...tokens,
     user: {
       email,
     },
@@ -69,10 +66,11 @@ const login = async (req, res) => {
 };
 
 const verifyEmail = async (req, res) => {
-  const { verificationCode } = req.params;
-  const user = await User.findOne({ verificationCode });
+  const { verifyCode } = req.params;
+  const user = await User.findOne({ verificationCode: verifyCode });
+
   if (!user) {
-    throw HttpError(401, "User not found");
+    throw HttpError(401, "Verification code is incorrect");
   }
   if (user.verifiedEmail) {
     throw HttpError(401, "Email has already been verified");
@@ -90,9 +88,12 @@ const verifyEmail = async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
   });
+  res.cookie("accessToken", tokens.accessToken, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
 
   res.status(200).json({
-    ...tokens,
     user: {
       email: user.email,
     },
@@ -118,9 +119,12 @@ const refreshToken = async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
   });
+  res.cookie("accessToken", tokens.accessToken, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
 
   res.status(200).json({
-    ...tokens,
     user: {
       email,
     },
@@ -140,6 +144,7 @@ const logout = async (req, res) => {
   const { refreshToken } = req.cookies;
   await tokenService.removeToken(refreshToken);
   res.clearCookie("refreshToken");
+  res.clearCookie("accessToken");
 
   res.json({
     message: "Logout success",

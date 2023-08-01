@@ -7,12 +7,19 @@ import { authRouter, statsRouter, wordsRouter } from "./routes/index.js";
 import { authenticate } from "./middlewares/index.js";
 dotenv.config();
 
+const { BASE_SITE_URL } = process.env;
+
 export const app = express();
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
+const corsConfig = {
+  origin: BASE_SITE_URL,
+  credentials: true,
+};
 
+app.use(cors(corsConfig));
+app.options("*", cors(corsConfig));
 app.use(logger(formatsLogger));
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
