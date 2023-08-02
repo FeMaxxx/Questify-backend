@@ -8,13 +8,18 @@ export const authenticate = async (req, res, next) => {
   const [bearer, t] = authorization.split(" ");
   let token = null;
 
-  if (accessToken === "" && bearer !== "Bearer" && token === "") {
+  if (!accessToken && !token) {
     next(HttpError(403));
+    return;
   }
 
   if (accessToken !== undefined) {
     token = accessToken;
   } else {
+    if (bearer !== "Bearer") {
+      next(HttpError(403));
+      return;
+    }
     token = t;
   }
 
@@ -22,7 +27,10 @@ export const authenticate = async (req, res, next) => {
     const { id } = tokenService.validateAccessToken(token);
     const user = await User.findById(id);
 
-    if (!user) next(HttpError(401));
+    if (!user) {
+      next(HttpError(401));
+      return;
+    }
 
     req.user = user;
     next();

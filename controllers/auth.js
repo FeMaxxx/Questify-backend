@@ -26,7 +26,11 @@ const register = async (req, res) => {
   //   thirdLvl: [],
   // });
   // await Stat.create({ user: _id });
-  await sendActivationMail(email, verificationCode);
+  try {
+    await sendActivationMail(email, verificationCode);
+  } catch {
+    throw HttpError(500, "Server error");
+  }
 
   res.status(201).json({ message: "Verify your email to complete the registration" });
 };
