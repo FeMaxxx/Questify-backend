@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { Strategy } from "passport-google-oauth2";
 import { nanoid } from "nanoid";
 import { User } from "../models/user.js";
+import { Stat } from "../models/stat.js";
+import { Word } from "../models/word.js";
 
 const { BASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
 
@@ -23,9 +25,9 @@ const googleCallback = async (req, accessToken, refreshToken, profile, done) => 
 
     const password = await bcrypt.hash(nanoid(), 10);
     const newUser = await User.create({ email, password });
-    await Stat.create({ user: _id });
+    await Stat.create({ user: newUser._id });
     await Word.create({
-      user: _id,
+      user: newUser._id,
       vocabulary: [],
       firstLvl: [],
       secondLvl: [],
