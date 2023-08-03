@@ -1,11 +1,39 @@
 import bcrypt from "bcryptjs";
+import tokenService from "../services/tokens.js";
 import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { User } from "../models/user.js";
 import { Word } from "../models/word.js";
 import { Stat } from "../models/stat.js";
 import { sendActivationMail } from "../services/sendEmail.js";
 import { nanoid } from "nanoid";
-import tokenService from "../services/tokens.js";
+
+const { BASE_SITE_URL } = process.env;
+
+const googleAuth = async (req, res) => {
+  const { email, _id } = req.user;
+
+  const tokens = tokenService.generateTokens({ id: _id, email: email });
+  await tokenService.saveToken(_id, tokens.refreshToken);
+  await Stat.create({ user: _id });
+  await Word.create({
+    user: _id,
+    vocabulary: [],
+    firstLvl: [],
+    secondLvl: [],
+    thirdLvl: [],
+  });
+
+  res.cookie("refreshToken", tokens.refreshToken, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
+  res.cookie("accessToken", tokens.accessToken, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
+
+  res.redirect(`${BASE_SITE_URL}`);
+};
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -15,22 +43,24 @@ const register = async (req, res) => {
 
   const hashPassword = await bcrypt.hash(password, 10);
   const verificationCode = nanoid().slice(0, 6);
-  const newUser = await User.create({ ...req.body, password: hashPassword, verificationCode });
-  // const { _id } = newUser;
 
-  // await Word.create({
-  //   user: _id,
-  //   vocabulary: [],
-  //   firstLvl: [],
-  //   secondLvl: [],
-  //   thirdLvl: [],
-  // });
-  // await Stat.create({ user: _id });
   try {
     await sendActivationMail(email, verificationCode);
   } catch {
     throw HttpError(500, "Server error");
   }
+
+  const newUser = await User.create({ ...req.body, password: hashPassword, verificationCode });
+  const { _id } = newUser;
+
+  await Word.create({
+    user: _id,
+    vocabulary: [],
+    firstLvl: [],
+    secondLvl: [],
+    thirdLvl: [],
+  });
+  await Stat.create({ user: _id });
 
   res.status(201).json({ message: "Verify your email to complete the registration" });
 };
@@ -41,10 +71,12 @@ const login = async (req, res) => {
   if (!user) {
     throw HttpError(401, "Email or password invalid");
   }
+
   const passwordCompare = await bcrypt.compare(password, user.password);
   if (!passwordCompare) {
     throw HttpError(401, "Email or password invalid");
   }
+
   if (!user.verifiedEmail) {
     await sendActivationMail(email, user.verificationCode);
     throw HttpError(409, "Email is not verified");
@@ -74,10 +106,7 @@ const verifyEmail = async (req, res) => {
   const user = await User.findOne({ verificationCode: verifyCode });
 
   if (!user) {
-    throw HttpError(401, "Verification code is incorrect");
-  }
-  if (user.verifiedEmail) {
-    throw HttpError(401, "Email has already been verified");
+    throw HttpError(409, "Verification code is incorrect");
   }
 
   const tokens = tokenService.generateTokens({ id: user._id, email: user.email });
@@ -156,6 +185,7 @@ const logout = async (req, res) => {
 };
 
 export const ctrl = {
+  googleAuth: ctrlWrapper(googleAuth),
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
   verifyEmail: ctrlWrapper(verifyEmail),
