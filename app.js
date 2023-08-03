@@ -22,6 +22,7 @@ app.options("*", cors(corsConfig));
 app.use(logger(formatsLogger));
 app.use(express.json());
 app.use(cookieParser());
+app.set("trust proxy", 1);
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/stats", authenticate, statsRouter);
