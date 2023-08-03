@@ -14,14 +14,6 @@ const googleAuth = async (req, res) => {
 
   const tokens = tokenService.generateTokens({ id: _id, email: email });
   await tokenService.saveToken(_id, tokens.refreshToken);
-  await Stat.create({ user: _id });
-  await Word.create({
-    user: _id,
-    vocabulary: [],
-    firstLvl: [],
-    secondLvl: [],
-    thirdLvl: [],
-  });
 
   res.cookie("refreshToken", tokens.refreshToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
