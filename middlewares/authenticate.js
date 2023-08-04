@@ -8,7 +8,7 @@ export const authenticate = async (req, res, next) => {
   const [bearer, t] = authorization.split(" ");
   let token = null;
 
-  if (!accessToken && !token) {
+  if (!accessToken && !t) {
     next(HttpError(403));
     return;
   }

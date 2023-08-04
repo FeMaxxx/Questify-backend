@@ -16,7 +16,7 @@ const wordsSchem = {
     require: true,
   },
   canByConfirmed: {
-    type: String,
+    type: Date,
     require: true,
   },
 };
