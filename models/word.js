@@ -55,7 +55,7 @@ const addSchema = Joi.object({
   word: Joi.string().required(),
   translate: Joi.array().items(Joi.string()).required(),
   addedAt: Joi.date().required(),
-  canByConfirmed: Joi.string().required(),
+  canByConfirmed: Joi.date().required(),
 });
 
 const moveSchema = Joi.object({
