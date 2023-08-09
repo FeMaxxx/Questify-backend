@@ -2,6 +2,7 @@ import { HttpError, ctrlWrapper } from "../helpers/index.js";
 import { Word } from "../models/word.js";
 import { Stat } from "../models/stat.js";
 import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
 
 const getAll = async (req, res) => {
   const { _id } = req.user;
@@ -49,9 +50,9 @@ const moveWord = async (req, res) => {
     secondLvl: 2,
     thirdLvl: 3,
   };
+
   const words = await Word.find({ user: _id });
   const foundWord = words[0][moveFrom].find(item => new ObjectId(id).equals(item._id));
-
   if (!foundWord) {
     throw HttpError(404, "Word not found");
   }
@@ -62,7 +63,12 @@ const moveWord = async (req, res) => {
     { user: _id },
     {
       $pull: { [moveFrom]: foundWord },
-      $push: { [moveTo]: { ...word, canByConfirmed } },
+    }
+  );
+  await Word.updateOne(
+    { user: _id },
+    {
+      $push: { [moveTo]: { ...word, canByConfirmed, _id: new mongoose.Types.ObjectId() } },
     }
   );
 
