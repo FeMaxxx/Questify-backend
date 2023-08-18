@@ -89,6 +89,11 @@ const moveWord = async (req, res) => {
     statsRequest.wordsInLearningProcess = -1;
   }
 
+  if (moveFrom === moveTo) {
+    statsRequest.successfulWordConfirmation = 0;
+    statsRequest.failedWordConfirmation = 1;
+  }
+
   await Stat.updateOne({ user: _id }, { $inc: statsRequest });
 
   res.status(200).json("Word moved");

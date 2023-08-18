@@ -1,5 +1,12 @@
 import { HttpError, ctrlWrapper } from "../helpers/index.js";
-import { User } from "../models/user.js";
+import { Stat } from "../models/stat.js";
+
+const getStats = async (req, res) => {
+  const { id } = req.user;
+  const result = await Stat.find({ user: id });
+
+  res.json(result);
+};
 
 const updateRandomWordStats = async (req, res) => {
   const { id } = req.user;
@@ -9,11 +16,12 @@ const updateRandomWordStats = async (req, res) => {
     request = { failedRandomWordConfirmation: 1 };
   }
 
-  await User.findByIdAndUpdate(id, { $inc: request }, { new: true });
+  await Stat.findOneAndUpdate({ user: id }, { $inc: request });
 
   res.json("Successful statistics update");
 };
 
 export const ctrl = {
+  getStats: ctrlWrapper(getStats),
   updateRandomWordStats: ctrlWrapper(updateRandomWordStats),
 };

@@ -5,6 +5,8 @@ import { schemas } from "../models/stat.js";
 
 export const statsRouter = express.Router();
 
+statsRouter.get("/", ctrl.getStats);
+
 statsRouter.patch(
   "/randomVord",
   validateBody(schemas.updateRandomWordStatsSchema),
