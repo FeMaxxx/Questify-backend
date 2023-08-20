@@ -18,10 +18,12 @@ const googleAuth = async (req, res) => {
   res.cookie("refreshToken", tokens.refreshToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
+    cookie_prefix: "vocabulary-topaz",
   });
   res.cookie("accessToken", tokens.accessToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
+    cookie_prefix: "vocabulary-topaz",
   });
 
   res.redirect(`${BASE_SITE_URL}`);
