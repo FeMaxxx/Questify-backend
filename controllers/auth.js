@@ -12,21 +12,12 @@ const { BASE_SITE_URL } = process.env;
 const googleAuth = async (req, res) => {
   const { email, _id } = req.user;
 
-  const tokens = tokenService.generateTokens({ id: _id, email: email });
+  const tokens = tokenService.generateTokens({ id: _id, email });
   await tokenService.saveToken(_id, tokens.refreshToken);
 
-  res.cookie("refreshToken", tokens.refreshToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    cookie_prefix: "vocabulary-topaz",
-  });
-  res.cookie("accessToken", tokens.accessToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    cookie_prefix: "vocabulary-topaz",
-  });
-
-  res.redirect(`${BASE_SITE_URL}`);
+  res.redirect(
+    `${BASE_SITE_URL}?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
+  );
 };
 
 const register = async (req, res) => {
@@ -79,16 +70,8 @@ const login = async (req, res) => {
   const tokens = tokenService.generateTokens({ id: user._id, email: user.email });
   await tokenService.saveToken(user._id, tokens.refreshToken);
 
-  res.cookie("refreshToken", tokens.refreshToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-  });
-  res.cookie("accessToken", tokens.accessToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-  });
-
   res.json({
+    tokens,
     user: {
       email,
     },
@@ -121,6 +104,7 @@ const verifyEmail = async (req, res) => {
   });
 
   res.status(200).json({
+    tokens,
     user: {
       email: user.email,
     },
@@ -128,30 +112,23 @@ const verifyEmail = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
-  const { refreshToken } = req.cookies;
+  const { refreshToken } = req.body;
+
   if (!refreshToken) {
     throw HttpError(403, "Token invalid");
   }
 
-  const { id, email } = tokenService.validateRefreshToken(refreshToken);
+  const data = tokenService.validateRefreshToken(refreshToken);
   const tokenFromDb = await tokenService.findToken(refreshToken);
-  if (!id || !email || !tokenFromDb) {
+  if (!data || !tokenFromDb) {
     throw HttpError(403, "Token invalid");
   }
-
-  const tokens = tokenService.generateTokens({ id, email });
-  await tokenService.saveToken(id, tokens.refreshToken);
-
-  res.cookie("refreshToken", tokens.refreshToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-  });
-  res.cookie("accessToken", tokens.accessToken, {
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-  });
+  console.log(data);
+  const tokens = tokenService.generateTokens(data);
+  await tokenService.saveToken(data.id, tokens.refreshToken);
 
   res.status(200).json({
+    tokens,
     user: {
       email,
     },
@@ -170,8 +147,8 @@ const getCurrent = async (req, res) => {
 const logout = async (req, res) => {
   const { refreshToken } = req.cookies;
   await tokenService.removeToken(refreshToken);
-  res.clearCookie("refreshToken");
-  res.clearCookie("accessToken");
+  // res.clearCookie("refreshToken");
+  // res.clearCookie("accessToken");
 
   res.json({
     message: "Logout success",

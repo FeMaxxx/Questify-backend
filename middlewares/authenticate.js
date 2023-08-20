@@ -3,33 +3,16 @@ import { User } from "../models/user.js";
 import tokenService from "../services/tokens.js";
 
 export const authenticate = async (req, res, next) => {
-  const { accessToken } = req.cookies;
   const { authorization = "" } = req.headers;
   const [bearer, t] = authorization.split(" ");
-  let token = null;
-
-  if (!accessToken && !t) {
-    next(HttpError(403));
-    return;
-  }
-
-  if (accessToken !== undefined) {
-    token = accessToken;
-  } else {
-    if (bearer !== "Bearer") {
-      next(HttpError(403));
-      return;
-    }
-    token = t;
-  }
+  if (bearer !== "Bearer" || t === "") next(HttpError(403));
 
   try {
-    const { id } = tokenService.validateAccessToken(token);
+    const { id } = tokenService.validateAccessToken(t);
     const user = await User.findById(id);
 
     if (!user) {
       next(HttpError(401));
-      return;
     }
 
     req.user = user;
