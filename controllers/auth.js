@@ -118,14 +118,14 @@ const refreshToken = async (req, res) => {
     throw HttpError(403, "Token invalid");
   }
 
-  const data = tokenService.validateRefreshToken(refreshToken);
+  const { id, email } = tokenService.validateRefreshToken(refreshToken);
   const tokenFromDb = await tokenService.findToken(refreshToken);
-  if (!data || !tokenFromDb) {
+  if (!id || !tokenFromDb) {
     throw HttpError(403, "Token invalid");
   }
-  console.log(data);
-  const tokens = tokenService.generateTokens(data);
-  await tokenService.saveToken(data.id, tokens.refreshToken);
+
+  const tokens = tokenService.generateTokens({ id, email });
+  await tokenService.saveToken(id, tokens.refreshToken);
 
   res.status(200).json({
     tokens,
